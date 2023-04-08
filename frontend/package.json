@@ -1,0 +1,9 @@
+{
+  "name": "cardzfrontend",
+  "version": "1.0.0",
+  "source": "src/main/html/index.html",
+  "devDependencies": {
+    "parcel": "^2.8.3",
+    "parcel-reporter-clean-dist": "^1.0.4"
+  }
+}

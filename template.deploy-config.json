@@ -1,0 +1,6 @@
+{
+  "assetsBucketName":  "YOURBUCKET",
+  "assetsBucketPrefix": "testscalaserverless/dev/assets",
+  "assetsUrlBase": "https://www.example.com/testscalaserverless/dev/assets",
+  "apiBaseUrl": "https://www.example.com/testscalaserverless/dev"
+}

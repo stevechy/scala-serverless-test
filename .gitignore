@@ -1,0 +1,15 @@
+
+project/project/
+project/target/
+target/
+.bsp/
+.idea/
+node_modules/
+frontend/dist/
+.parcel-cache
+
+.serverless
+
+deploy-config.*.json
+
+exportToHTML/

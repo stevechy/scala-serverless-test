@@ -1,0 +1,31 @@
+service: aws-test-scala-serverless
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: java11
+  region: us-west-2
+
+
+
+package:
+  artifact: ${file(./backend/target/universal/lambda.json):artifact}
+
+functions:
+  api:
+    handler: LambdaHandler
+    events:
+      - http: ANY /{paths+}
+    snapStart: true
+    environment:
+      ASSETS_BASE_URL: ${file(./deploy-config.${opt:stage, 'dev'}.json):assetsUrlBase}
+      API_BASE_URL: ${file(./deploy-config.${opt:stage, 'dev'}.json):apiBaseUrl}
+
+custom:
+  s3Sync:
+    - bucketName: ${file(./deploy-config.${opt:stage, 'dev'}.json):assetsBucketName}
+      bucketPrefix: ${file(./deploy-config.${opt:stage, 'dev'}.json):assetsBucketPrefix}
+      localDir: frontend/dist
+
+plugins:
+  - serverless-s3-sync
