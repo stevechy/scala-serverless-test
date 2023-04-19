@@ -23,14 +23,17 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
 
+object LambdaHandler {
+  private val frontendProperties = new FrontendProperties()
+}
 class LambdaHandler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent], Resource {
 
-  private val frontendProperties = new FrontendProperties()
+  Core.getGlobalContext.register(this)
 
   override def handleRequest(input: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent = {
-    if(input.getPath == "/game" && input.getHttpMethod == "GET"){
+    if (input.getPath == "/game" && input.getHttpMethod == "GET") {
       return gamePage
-    } else if (input.getPath == "/cards/draw" && input.getHttpMethod == "POST"){
+    } else if (input.getPath == "/cards/draw" && input.getHttpMethod == "POST") {
       return drawCards()
     }
     notFoundPage(input.getPath)
@@ -39,13 +42,9 @@ class LambdaHandler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatew
   private def gamePage = {
     given domBuilder: DomBuilder[Text.TypedTag[String]] = new ScalaTagsBuilder()
 
-    val defaultContext = AppContext(new EventAdapter {},
-      AppSection.defaultContext,
-      () => java.util.UUID.randomUUID().toString
-    )
     val htmlOutput = html(
       head(
-        script(raw(s"""var apiBaseUrl="${frontendProperties.apiBaseUrl}";""")),
+        script(raw(s"""var apiBaseUrl="${LambdaHandler.frontendProperties.apiBaseUrl}";""")),
         script(attr("type") := "module", src := entryPointUrl),
         link(rel := "stylesheet", href := "https://unpkg.com/chota@latest")
       ),
@@ -84,7 +83,7 @@ class LambdaHandler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatew
       _ => {
         random.nextInt(2) match {
           case 0 => AttackCard(java.util.UUID.randomUUID().toString, random.nextInt(5) + 1)
-          case 1 => HealCard(java.util.UUID.randomUUID().toString,  random.nextInt(3) + 1)
+          case 1 => HealCard(java.util.UUID.randomUUID().toString, random.nextInt(3) + 1)
         }
       }
     )
@@ -95,15 +94,21 @@ class LambdaHandler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatew
     event
   }
 
+  private val defaultContext = {
+    AppContext(new EventAdapter {},
+      AppSection.defaultContext,
+      () => java.util.UUID.randomUUID().toString
+    )
+  }
+
   private def entryPointUrl = {
-    val entryPointUrl = frontendProperties.entryPointUrl
+    val entryPointUrl = LambdaHandler.frontendProperties.entryPointUrl
     entryPointUrl
   }
 
   private def notFoundPage(path: String) = {
     val htmlOutput = html(
       head(
-        script(attr("type") := "module", src := entryPointUrl),
         link(rel := "stylesheet", href := "https://unpkg.com/chota@latest")
       ),
       body(
@@ -122,16 +127,14 @@ class LambdaHandler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatew
     event
   }
 
-  def afterRestore(context: org.crac.Context[? <: org.crac.Resource]): Unit = {
+  override def afterRestore(context: org.crac.Context[? <: org.crac.Resource]): Unit = {
 
   }
 
-  def beforeCheckpoint(context: org.crac.Context[? <: org.crac.Resource]): Unit = {
-    html()
-    Map().asJava
-    AppContext.viewContext.toString
-    Map[String,String]().asJson
-    new APIGatewayProxyResponseEvent()
+  override def beforeCheckpoint(context: org.crac.Context[? <: org.crac.Resource]): Unit = {
+    System.out.println("beforeCheckpoint")
+    gamePage
+    ()
   }
 
 }
